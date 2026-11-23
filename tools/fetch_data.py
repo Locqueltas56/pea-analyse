@@ -28,16 +28,23 @@ def num(x, nd=None):
 
 
 def weekly_closes(ticker):
+    """Cours hebdomadaires : "c" = cours réel, "a" = cours ajusté des dividendes (rendement total)."""
     h = yf.Ticker(ticker).history(period="10y", interval="1wk", auto_adjust=False)
     h = h.dropna(subset=["Close"])
     if h.empty:
         return None
     idx = h.index.tz_localize(None) if h.index.tz is not None else h.index
-    s = pd.Series(h["Close"].values, index=pd.DatetimeIndex(idx).normalize())
-    s = s[~s.index.duplicated(keep="last")]
-    full = pd.date_range(s.index[0], s.index[-1], freq="7D")
-    s = s.reindex(full).ffill()
-    return {"start": s.index[0].date().isoformat(), "c": [round(float(v), 3) for v in s.values]}
+    df = pd.DataFrame({"c": h["Close"].values}, index=pd.DatetimeIndex(idx).normalize())
+    if "Adj Close" in h.columns:
+        df["a"] = h["Adj Close"].values
+        df["a"] = df["a"].fillna(df["c"])
+    df = df[~df.index.duplicated(keep="last")]
+    full = pd.date_range(df.index[0], df.index[-1], freq="7D")
+    df = df.reindex(full).ffill()
+    out = {"start": df.index[0].date().isoformat(), "c": [round(float(v), 3) for v in df["c"].values]}
+    if "a" in df:
+        out["a"] = [round(float(v), 3) for v in df["a"].values]
+    return out
 
 
 def dividend_stats(t, price):
