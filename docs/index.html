@@ -467,7 +467,7 @@ function viewMethod(){
 }
 
 /* ---------- routeur ---------- */
-function route(){
+function route(keep){
   nav(); const h=location.hash||'#screener';
   if(!DATA) return;
   if(h.startsWith('#s-')){const k=h.slice(3),s=DATA.stocks.find(x=>slug(x.t)===k);viewStock(s?s.t:k)}
@@ -476,10 +476,10 @@ function route(){
   else if(h==='#watch') viewWatch();
   else if(h==='#method') viewMethod();
   else viewScreener();
-  window.scrollTo(0,0);
+  if(!keep) window.scrollTo(0,0);
 }
-addEventListener('hashchange',route);
-let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(route,200)});
+addEventListener('hashchange',()=>route());
+let rz,lastW=innerWidth;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(innerWidth!==lastW){lastW=innerWidth;const y=scrollY;route(true);scrollTo(0,y)}},200)});
 fetch('data/stocks.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
   DATA=d; for(const s of DATA.stocks)BYT[s.t]=s; scoreAll();
   if(d.meta.demo) $('#banner').innerHTML='<div class="banner">Données fictives de démonstration</div>';
