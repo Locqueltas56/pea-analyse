@@ -30,5 +30,5 @@ puis ouvrir http://localhost:8000. Pour des vraies données en local : `pip inst
 ## Limites
 
 - Les données Yahoo Finance sont gratuites, souvent incomplètes (un « – » indique une donnée absente) et non garanties.
-- `tickers.csv` ne garantit pas l'éligibilité PEA : vérifie-la auprès de ton courtier.
+- `tickers.csv` (environ 200 valeurs : France, zone euro et quelques pays nordiques de l'UE) ne garantit pas l'éligibilité PEA : vérifie-la auprès de ton courtier. Un symbole Yahoo erroné est simplement ignoré (voir `failed` dans `docs/data/stocks.json`). Modifier `tickers.csv` relance automatiquement la mise à jour des données.
 - Outil d'analyse personnel, pas un conseil en investissement.
