@@ -1,0 +1,40 @@
+ticker,name,country,sector
+AI.PA,Air Liquide,FR,Basic Materials
+MC.PA,LVMH,FR,Consumer Cyclical
+OR.PA,L'Oréal,FR,Consumer Defensive
+SU.PA,Schneider Electric,FR,Industrials
+SAN.PA,Sanofi,FR,Healthcare
+TTE.PA,TotalEnergies,FR,Energy
+BNP.PA,BNP Paribas,FR,Financial Services
+CS.PA,AXA,FR,Financial Services
+AIR.PA,Airbus,FR,Industrials
+RI.PA,Pernod Ricard,FR,Consumer Defensive
+SAF.PA,Safran,FR,Industrials
+DG.PA,Vinci,FR,Industrials
+EL.PA,EssilorLuxottica,FR,Healthcare
+KER.PA,Kering,FR,Consumer Cyclical
+CAP.PA,Capgemini,FR,Technology
+ORA.PA,Orange,FR,Communication Services
+ACA.PA,Crédit Agricole,FR,Financial Services
+GLE.PA,Société Générale,FR,Financial Services
+STLAP.PA,Stellantis,FR,Consumer Cyclical
+ML.PA,Michelin,FR,Consumer Cyclical
+VIE.PA,Veolia,FR,Utilities
+HO.PA,Thales,FR,Industrials
+LR.PA,Legrand,FR,Industrials
+SGO.PA,Saint-Gobain,FR,Industrials
+ENGI.PA,Engie,FR,Utilities
+BN.PA,Danone,FR,Consumer Defensive
+RMS.PA,Hermès,FR,Consumer Cyclical
+PUB.PA,Publicis,FR,Communication Services
+DSY.PA,Dassault Systèmes,FR,Technology
+STMPA.PA,STMicroelectronics,FR,Technology
+URW.PA,Unibail-Rodamco-Westfield,FR,Real Estate
+TEP.PA,Teleperformance,FR,Industrials
+SW.PA,Sodexo,FR,Consumer Cyclical
+EN.PA,Bouygues,FR,Industrials
+AC.PA,Accor,FR,Consumer Cyclical
+EDEN.PA,Edenred,FR,Industrials
+RNO.PA,Renault,FR,Consumer Cyclical
+CA.PA,Carrefour,FR,Consumer Defensive
+ERF.PA,Eurofins Scientific,FR,Healthcare
