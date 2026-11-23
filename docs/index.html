@@ -57,6 +57,9 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{white-space:nowra
 .scroll{overflow-x:auto}
 .ln{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin-bottom:8px}.ln .x{background:none;border:0;color:var(--ink2);font-size:13px;cursor:pointer;min-height:44px;padding:0 6px}
 textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);font:12px/1.4 ui-monospace,monospace}
+.ac{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:min(260px,40vh);overflow-y:auto;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.ac li{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--ink)}
+.ac li:hover{background:var(--pri2)}.ac li span{color:var(--ink2);font-size:12px;white-space:nowrap}.ac li.none{color:var(--ink2);cursor:default}
 .btn{height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--pri);background:var(--pri);color:#fff;font-weight:600;cursor:pointer}.btn.alt{background:var(--card);color:var(--pri)}
 .err{color:var(--neg);font-size:13px;min-height:18px;margin-top:6px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-top:6px}
@@ -174,6 +177,28 @@ function nav(){
 }
 const watch=()=>{try{return JSON.parse(localStorage.getItem('pea.watch')||'[]')}catch(e){return[]}};
 const setWatch=a=>{try{localStorage.setItem('pea.watch',JSON.stringify(a))}catch(e){}};
+
+/* ---------- saisie avec suggestions ---------- */
+const norm=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function autocomplete(inp,pick,opt){
+  const clear=opt&&opt.clear, host=inp.parentElement; host.style.position='relative';
+  const ul=document.createElement('ul'); ul.className='ac'; ul.hidden=true; ul.setAttribute('role','listbox'); host.appendChild(ul);
+  let items=[];
+  const match=q=>{
+    q=norm(q.trim()); const S=DATA.stocks;
+    if(!q) return S.slice().sort((a,b)=>a.name.localeCompare(b.name,'fr')).slice(0,60);
+    const sc=x=>{const n=norm(x.name),t=norm(x.t);return n.startsWith(q)?0:n.split(/[\s'’-]+/).some(w=>w.startsWith(q))?1:n.includes(q)?2:t.startsWith(q)?3:t.includes(q)?4:9};
+    return S.map(x=>[sc(x),x]).filter(x=>x[0]<9).sort((a,b)=>a[0]-b[0]||a[1].name.localeCompare(b[1].name,'fr')).map(x=>x[1]).slice(0,60);
+  };
+  const render=()=>{items=match(inp.value);ul.innerHTML=items.length?items.map((x,i)=>`<li role="option" data-i="${i}"><b>${esc(x.name)}</b><span>${esc(x.t)} · ${esc(ctry(x.country))}</span></li>`).join(''):'<li class="none">Aucune valeur trouvée</li>';ul.hidden=false;ul.scrollTop=0};
+  const close=()=>{ul.hidden=true};
+  const choose=x=>{inp.value=clear?'':x.name;close();pick(x)};
+  inp.setAttribute('autocomplete','off');
+  inp.addEventListener('input',render); inp.addEventListener('focus',render);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(items[0]&&!ul.hidden)choose(items[0])}else if(e.key==='Escape')close()});
+  ul.addEventListener('click',e=>{e.preventDefault();const li=e.target.closest('li[data-i]');if(li)choose(items[+li.dataset.i])});
+  document.addEventListener('pointerdown',e=>{if(!host.contains(e.target))close()});
+}
 
 /* ---------- vue : screener ---------- */
 function rowHtml(s){
@@ -331,8 +356,7 @@ const LCOL=['#0F5C4A','#B4410C','#3B6FD4','#8A4FB8'];
 function viewCompare(){
   $('#app').innerHTML=`<h1>Comparateur</h1><p class="muted">Jusqu'à 4 valeurs, base 100 au début de la période.</p>
   <div class="card"><label class="filters" style="display:block"><span class="muted" style="font-size:12px">Ajouter une valeur</span>
-   <input id="cadd" list="dl" placeholder="Nom ou ticker" style="width:100%"></label>
-   <datalist id="dl">${DATA.stocks.map(s=>`<option value="${esc(s.name)}">`).join('')}</datalist>
+   <input id="cadd" placeholder="Tape un nom, ex. air, total, lvmh" style="width:100%"></label>
    <div class="chips" id="chips"></div>
    <div class="pills" id="cper">${[[1,'1 an'],[3,'3 ans'],[5,'5 ans'],[10,'10 ans']].map(([y,l])=>`<button data-y="${y}" class="${CMPY===y?'on':''}">${l}</button>`).join('')}</div>
    <div class="chart"><canvas id="cc"></canvas></div><div class="legend" id="clg"></div></div>
@@ -353,7 +377,7 @@ function viewCompare(){
     $('#clg').innerHTML=S.map((s,k)=>`<span><i style="background:${LCOL[k]}"></i>${esc(s.name)}</span>`).join('');
     $('#ctab').innerHTML=`<table><tr><th>Valeur</th><th>Perf.</th><th>Rend./an</th><th>σ vol.</th><th>Baisse max</th><th>Sharpe</th><th>Bêta</th><th>Score</th></tr>${S.map(s=>{const st=stats(s,CMPY);return st?`<tr><td>${esc(s.name)}</td><td>${sg(st.perf,0)}</td><td>${sg(st.cagr)}</td><td>${pc(st.vol)}</td><td>${sg(st.maxdd,0)}</td><td>${nf(st.sharpe,2)}</td><td>${st.beta==null?'–':nf(st.beta,2)}</td><td>${r0(s.score.total)}</td></tr>`:''}).join('')}</table>`;
   };
-  $('#cadd').addEventListener('change',e=>{const v=e.target.value.trim().toLowerCase();const s=DATA.stocks.find(x=>x.name.toLowerCase()===v||x.t.toLowerCase()===v);if(s&&!CMP.includes(s.t)&&CMP.length<4)CMP.push(s.t);e.target.value='';paint()});
+  autocomplete($('#cadd'),x=>{if(!CMP.includes(x.t)&&CMP.length<4)CMP.push(x.t);paint()},{clear:true});
   $('#chips').onclick=e=>{const t=e.target.closest('[data-t]')?.dataset.t;if(t){CMP=CMP.filter(x=>x!==t);paint()}};
   $('#cper').onclick=e=>{const y=e.target.dataset.y;if(!y)return;CMPY=+y;[...$('#cper').children].forEach(b=>b.classList.toggle('on',+b.dataset.y===CMPY));paint()};
   paint();
@@ -402,14 +426,13 @@ function viewPortfolio(){
    <div class="grid2" style="margin-top:12px">
     <div class="k"><div class="l">Montant investi</div><div class="v">${eur(C)}</div></div>
     <div class="k"><div class="l">Lignes</div><div class="v">${P.length}</div></div>
-    <div class="k"><div class="l">Dividendes estimés /an</div><div class="v">${eur(div)}</div><div class="n">${V?pc(div/V):''} de rendement</div></div>
+    <div class="k"><div class="l">Dividendes estimés /an</div><div class="v">${eur(div)}</div><div class="n">${V?pc(div/V)+' de rendement':''}</div></div>
     <div class="k"><div class="l">Lignes effectives</div><div class="v">${inc.length?nf(1/hhi,1):'–'}</div><div class="n">${top?'1ère : '+esc(top.s.name)+' '+nf(top.value/V*100,0)+' %':''}</div></div></div>
    <div class="lab" style="margin-top:12px"><span>Montant investi / plafond PEA</span><b>${nf(C/150000*100,0)} %</b></div>
    <div class="bar"><i style="width:${Math.min(100,C/150000*100)}%;background:var(--pri)"></i></div>
    <p class="muted" style="margin:0">Indicatif : le plafond de 150 000 € porte sur les versements, pas sur la valeur ni sur le prix de revient.</p></div>
   <div class="card"><h2>Ajouter ou modifier une ligne</h2>
-   <div class="filters"><label class="full">Valeur<input id="pf-n" list="pfdl" placeholder="Nom ou ticker" value="${pre?esc(pre.name):''}"></label>
-    <datalist id="pfdl">${DATA.stocks.map(s=>`<option value="${esc(s.name)}">`).join('')}</datalist>
+   <div class="filters"><label class="full">Valeur<input id="pf-n" placeholder="Tape un nom, ex. air, total, lvmh" value="${pre?esc(pre.name):''}"></label>
     <label>Quantité<input id="pf-q" type="number" inputmode="decimal" min="0" placeholder="10"></label>
     <label>Prix de revient (€/action)<input id="pf-p" type="number" inputmode="decimal" min="0" step="0.01" placeholder="150,00"></label></div>
    <div style="margin-top:10px"><button class="btn" id="pf-add">Enregistrer la ligne</button></div><div class="err" id="pf-err"></div>
@@ -425,6 +448,7 @@ function viewPortfolio(){
    <p class="muted" style="margin:8px 0 0">Simulation : ce qu'aurait donné la détention des quantités actuelles. Ce n'est pas ta performance réelle.</p></div>`:''}
   <div class="card"><h2>Sauvegarde</h2><textarea id="pf-json" aria-label="Contenu de la sauvegarde" placeholder="Colle ici une sauvegarde puis touche Importer"></textarea>
    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn alt" id="pf-exp">Exporter</button><button class="btn alt" id="pf-imp">Importer</button></div><div class="err" id="pf-msg"></div></div>`;
+  autocomplete($('#pf-n'),()=>$('#pf-q').focus());
   const find=v=>{v=v.trim().toLowerCase();return DATA.stocks.find(x=>x.name.toLowerCase()===v||x.t.toLowerCase()===v)};
   $('#pf-add').onclick=()=>{
     const s=find($('#pf-n').value),q=parseFloat($('#pf-q').value),pr=parseFloat($('#pf-p').value),er=$('#pf-err');
