@@ -241,9 +241,7 @@ function filtered(){
 function viewScreener(){
   const sectors=[...new Set(STOCKS.map(s=>s.sector))].sort();
   const countries=[...new Set(STOCKS.map(s=>s.country))].sort((a,b)=>ctry(a).localeCompare(ctry(b),'fr'));
-  const comCards=COMS.map(s=>{const st=stats(s,1),z=stats(s,5);return `<a class="k" href="#s-${slug(s.t)}" style="display:block;background:var(--card);border:1px solid var(--line)"><div class="l">${esc(s.name)}</div><div class="v">${money(s.price,s.currency)}</div><div class="n">1 an : ${st?sg(st.perf):'–'} · écart ${z?sgs(z.z):'–'}</div></a>`}).join('');
   $('#app').innerHTML=`<h1>Screener PEA</h1>
-  ${COMS.length?`<h2 style="margin:12px 0 8px">Or et argent <span class="muted" style="font-weight:400">(hors PEA, suivi informatif)</span></h2><div class="grid2" style="margin-bottom:14px">${comCards}</div>`:''}
   <p class="muted" id="count"></p>
   <div class="card"><div class="filters">
    <label class="full">Recherche<input id="f-q" type="search" placeholder="Nom ou ticker" value="${esc(STATE.q)}"></label>
