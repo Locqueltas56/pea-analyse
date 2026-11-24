@@ -1,4 +1,4 @@
-ticker,name,country,sector
+ticker,name,country,sector,kind
 AI.PA,Air Liquide,FR,Basic Materials
 MC.PA,LVMH,FR,Consumer Cyclical
 OR.PA,L'Oréal,FR,Consumer Defensive
@@ -201,3 +201,5 @@ JMT.LS,Jerónimo Martins,PT,
 NOVO-B.CO,Novo Nordisk,DK,
 ATCO-A.ST,Atlas Copco,SE,
 VOLV-B.ST,Volvo,SE,
+XAUT-USD,Or (Tether Gold XAUT),,Commodities,commodity
+WSLV.L,Argent (WisdomTree Physical Silver),GB,Commodities,commodity

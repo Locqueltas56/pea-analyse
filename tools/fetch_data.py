@@ -97,7 +97,8 @@ def fetch_one(row):
     return {
         "t": tk, "name": row.get("name") or info.get("shortName") or tk,
         "sector": info.get("sector") or row.get("sector") or "Autre",
-        "country": row.get("country") or "FR", "currency": info.get("currency") or "EUR",
+        "country": row.get("country") or "", "currency": info.get("currency") or "EUR",
+        "kind": row.get("kind") or "stock",
         "price": num(price, 3), "prev": num(info.get("previousClose") or c[-2], 3),
         "mcap": mcap,
         "per": num(info.get("trailingPE"), 2), "pb": num(info.get("priceToBook"), 2),
