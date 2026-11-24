@@ -105,7 +105,7 @@ const sect=s=>SECT[s]||s||'Autre';
 const CN={FR:'France',NL:'Pays-Bas',DE:'Allemagne',IT:'Italie',ES:'Espagne',BE:'Belgique',FI:'Finlande',IE:'Irlande',PT:'Portugal',LU:'Luxembourg',DK:'Danemark',SE:'Suède'};
 const ctry=c=>CN[c]||c||'';
 const RF=0.02, WEEK=604800000;
-let TR=true, STOCKS=[], COMS=[], DATA=null, BYT={}, STATE={q:'',sector:'',country:'',minScore:0,maxPer:'',minDy:'',minRoe:'',sort:'score'}, CMP=[], CMPY=5, PERIOD=10;
+let TR=true, STOCKS=[], COMS=[], ETFS=[], LIST=[], DATA=null, BYT={}, STATE={q:'',sector:'',country:'',minScore:0,maxPer:'',minDy:'',minRoe:'',sort:'score'}, CMP=[], CMPY=5, PERIOD=10;
 
 /* ---------- statistiques ---------- */
 const ser=s=>TR&&s.hist.a?s.hist.a:s.hist.c;
@@ -149,7 +149,7 @@ function pctRank(v,arr,hi){
 const avg=a=>{const f=a.filter(x=>x!=null);return f.length?mean(f):null};
 const cg=(a)=>a&&a.length>=2&&a[0]>0&&a[a.length-1]>0?Math.pow(a[a.length-1]/a[0],1/(a.length-1))-1:null;
 function scoreAll(){
-  for(const s of DATA.stocks) if(s.kind==='commodity') s.score={q:null,v:null,d:null,g:null,total:null};
+  for(const s of DATA.stocks) if((s.kind||'stock')!=='stock') s.score={q:null,v:null,d:null,g:null,total:null};
   const S=STOCKS;
   for(const s of S){s.revg=cg(s.rev);s.nig=cg(s.ni);s.payS=s.payout==null?null:s.payout<=0?null:s.payout<=0.6?100:Math.max(0,100-(s.payout-0.6)/0.4*100)}
   const bySector={}; for(const s of S)(bySector[s.sector]=bySector[s.sector]||[]).push(s);
@@ -190,7 +190,7 @@ function autocomplete(inp,pick,opt){
   const ul=document.createElement('ul'); ul.className='ac'; ul.hidden=true; ul.setAttribute('role','listbox'); host.appendChild(ul);
   let items=[];
   const match=q=>{
-    q=norm(q.trim()); const S=opt&&opt.all?DATA.stocks:STOCKS;
+    q=norm(q.trim()); const S=opt&&opt.all?DATA.stocks:LIST;
     if(!q) return S.slice().sort((a,b)=>a.name.localeCompare(b.name,'fr')).slice(0,60);
     const sc=x=>{const n=norm(x.name),t=norm(x.t);return n.startsWith(q)?0:n.split(/[\s'’-]+/).some(w=>w.startsWith(q))?1:n.includes(q)?2:t.startsWith(q)?3:t.includes(q)?4:9};
     return S.map(x=>[sc(x),x]).filter(x=>x[0]<9).sort((a,b)=>a[0]-b[0]||a[1].name.localeCompare(b[1].name,'fr')).map(x=>x[1]).slice(0,60);
@@ -226,7 +226,7 @@ function rowHtml(s){
 }
 function filtered(){
   const f=STATE,q=f.q.trim().toLowerCase();
-  let L=STOCKS.filter(s=>
+  let L=LIST.filter(s=>
     (!q||s.name.toLowerCase().includes(q)||s.t.toLowerCase().includes(q))&&
     (!f.sector||s.sector===f.sector)&&(!f.country||s.country===f.country)&&
     (s.score.total==null?f.minScore<=0:s.score.total>=f.minScore)&&
@@ -239,8 +239,8 @@ function filtered(){
   return L;
 }
 function viewScreener(){
-  const sectors=[...new Set(STOCKS.map(s=>s.sector))].sort();
-  const countries=[...new Set(STOCKS.map(s=>s.country))].sort((a,b)=>ctry(a).localeCompare(ctry(b),'fr'));
+  const sectors=[...new Set(LIST.map(s=>s.sector))].sort();
+  const countries=[...new Set(LIST.map(s=>s.country))].sort((a,b)=>ctry(a).localeCompare(ctry(b),'fr'));
   $('#app').innerHTML=`<h1>Screener PEA</h1>
   <p class="muted" id="count"></p>
   <div class="card"><div class="filters">
@@ -255,7 +255,7 @@ function viewScreener(){
   </div></div>
   <div class="head"><div></div><div>Valeur</div><div>PER</div><div>Div.</div><div>ROE</div><div>1 an</div><div>Écart σ (5 ans)</div><div>Cours</div></div>
   <div class="list" id="list"></div>`;
-  const upd=()=>{const L=filtered();$('#count').textContent=`${L.length} valeur${L.length>1?'s':''} sur ${STOCKS.length}`;$('#list').innerHTML=L.map(rowHtml).join('')||'<p class="muted">Aucune valeur ne correspond.</p>'};
+  const upd=()=>{const L=filtered();$('#count').textContent=`${L.length} valeur${L.length>1?'s':''} sur ${LIST.length}`;$('#list').innerHTML=L.map(rowHtml).join('')||'<p class="muted">Aucune valeur ne correspond.</p>'};
   const bind=(id,k,num)=>$(id).addEventListener('input',e=>{STATE[k]=num?(e.target.value===''?(k==='minScore'?0:''):e.target.value):e.target.value;upd()});
   bind('#f-q','q');bind('#f-sector','sector');bind('#f-country','country');bind('#f-sort','sort');
   bind('#f-minScore','minScore',1);bind('#f-maxPer','maxPer',1);bind('#f-minDy','minDy',1);bind('#f-minRoe','minRoe',1);
@@ -314,7 +314,7 @@ function zText(z){
 /* ---------- vue : fiche valeur ---------- */
 function viewStock(t){
   const s=BYT[t]; if(!s){$('#app').innerHTML='<p>Valeur introuvable. <a class="back" href="#screener">Retour</a></p>';return}
-  const com=s.kind==='commodity', day=s.prev?s.price/s.prev-1:null, w=watch().includes(s.t), sc=s.score;
+  const com=(s.kind||'stock')!=='stock', day=s.prev?s.price/s.prev-1:null, w=watch().includes(s.t), sc=s.score;
   const axes=[['Qualité',sc.q],['Croissance',sc.g],['Dividende',sc.d],['Valorisation',sc.v]];
   $('#app').innerHTML=`<a class="back" href="#screener">‹ Screener</a>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
@@ -515,7 +515,7 @@ function viewPortfolio(){
   <div class="card"><h2>Sauvegarde</h2><textarea id="pf-json" aria-label="Contenu de la sauvegarde" placeholder="Colle ici une sauvegarde puis touche Importer"></textarea>
    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn alt" id="pf-exp">Exporter</button><button class="btn alt" id="pf-imp">Importer</button></div><div class="err" id="pf-msg"></div></div>`;
   autocomplete($('#pf-n'),()=>$('#pf-q').focus());
-  const find=v=>{v=v.trim().toLowerCase();return STOCKS.find(x=>x.name.toLowerCase()===v||x.t.toLowerCase()===v)};
+  const find=v=>{v=v.trim().toLowerCase();return LIST.find(x=>x.name.toLowerCase()===v||x.t.toLowerCase()===v)};
   $('#pf-add').onclick=()=>{
     const s=find($('#pf-n').value),q=parseFloat($('#pf-q').value),pr=parseFloat($('#pf-p').value),er=$('#pf-err');
     if(!s){er.textContent='Choisis une valeur dans la liste.';return}
@@ -572,7 +572,7 @@ function route(keep){
 addEventListener('hashchange',()=>route());
 let rz,lastW=innerWidth;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(innerWidth!==lastW){lastW=innerWidth;const y=scrollY;route(true);scrollTo(0,y)}},200)});
 fetch('data/stocks.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
-  DATA=d; for(const s of DATA.stocks)BYT[s.t]=s; STOCKS=DATA.stocks.filter(s=>s.kind!=='commodity'); COMS=DATA.stocks.filter(s=>s.kind==='commodity'); scoreAll();
+  DATA=d; for(const s of DATA.stocks)BYT[s.t]=s; STOCKS=DATA.stocks.filter(s=>(s.kind||'stock')==='stock'); ETFS=DATA.stocks.filter(s=>s.kind==='etf'); LIST=[...STOCKS,...ETFS]; COMS=DATA.stocks.filter(s=>s.kind==='commodity'); scoreAll();
   if(d.meta.demo) $('#banner').innerHTML='<div class="banner">Données fictives de démonstration</div>';
   route();
 }).catch(e=>{$('#app').innerHTML='<div class="card"><h2>Données introuvables</h2><p class="muted">Impossible de charger data/stocks.json ('+esc(e.message)+'). Si tu as ouvert le fichier directement, lance un petit serveur local : <code>python -m http.server</code> dans le dossier docs, ou utilise GitHub Pages.</p></div>'});

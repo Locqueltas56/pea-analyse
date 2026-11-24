@@ -203,3 +203,18 @@ ATCO-A.ST,Atlas Copco,SE,
 VOLV-B.ST,Volvo,SE,
 XAUT-USD,Or (Tether Gold XAUT),,Commodities,commodity
 WSLV.L,Argent (WisdomTree Physical Silver),GB,Commodities,commodity
+CW8.PA,Amundi MSCI World (CW8),FR,ETF,etf
+DCAM.PA,Amundi PEA MSCI World (DCAM),FR,ETF,etf
+WPEA.PA,iShares MSCI World Swap PEA (WPEA),IE,ETF,etf
+EWLD.PA,Amundi PEA Monde (EWLD),FR,ETF,etf
+PE500.PA,Amundi PEA S&P 500 (PE500),FR,ETF,etf
+ESE.PA,BNP Easy S&P 500 (ESE),FR,ETF,etf
+PUST.PA,Amundi PEA Nasdaq-100 (PUST),FR,ETF,etf
+PAEEM.PA,Amundi PEA Marchés émergents (PAEEM),FR,ETF,etf
+PTPXE.PA,Amundi PEA Japon Topix (PTPXE),FR,ETF,etf
+RS2K.PA,Amundi PEA Russell 2000 (RS2K),FR,ETF,etf
+CAC.PA,Amundi CAC 40 (CAC),FR,ETF,etf
+C40.PA,Lyxor CAC 40 (C40),FR,ETF,etf
+MSE.PA,Amundi Euro Stoxx 50 (MSE),FR,ETF,etf
+MEUD.PA,Amundi Stoxx Europe 600 (MEUD),FR,ETF,etf
+PCEU.PA,Amundi PEA MSCI Europe (PCEU),FR,ETF,etf
