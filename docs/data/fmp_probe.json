@@ -1,0 +1,113 @@
+{
+ "key_set": true,
+ "results": {
+  "AI.PA": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  },
+  "TTE.PA": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  },
+  "MC.PA": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  },
+  "SAP.DE": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  },
+  "NESN.SW": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  },
+  "ASML.AS": {
+   "income-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "cash-flow-statement": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "key-metrics": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   },
+   "ratios": {
+    "status": 402,
+    "msg": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmo"
+   }
+  }
+ }
+}
