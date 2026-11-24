@@ -156,12 +156,12 @@ function scoreAll(){
   for(const s of S){
     const g=(bySector[s.sector].length>=6)?bySector[s.sector]:S;
     const P=(k,hi,f=x=>x[k])=>pctRank(f(s),g.map(f),hi);
-    const q=avg([P('roe',true),P('margin',true),P('de',false)]);
+    const q=avg([P('roe',true),P('margin',true),P('opm',true),P('de',false),P('ndebitda',false)]);
     const perOk=x=>x.per!=null&&x.per>0?x.per:null;
-    const v=avg([s.per!=null&&s.per<=0?0:pctRank(perOk(s),g.map(perOk),false),P('pb',false),P('fcfy',true)]);
+    const v=avg([s.per!=null&&s.per<=0?0:pctRank(perOk(s),g.map(perOk),false),P('pb',false),P('fcfy',true),P('evebitda',false)]);
     const pays=s.dy>0;
     const d=pays?avg([P('dy',true),s.payS,P('dgrowth',true),Math.min(s.dyears,15)/15*100]):null;
-    const gr=avg([P('revg',true),P('nig',true)]);
+    const gr=avg([P('revg',true),P('nig',true),P('epsg',true)]);
     const ax={q,v,d,g:gr}, W={q:.30,v:.25,d:.25,g:.20};
     let t=0,w=0; for(const k in ax) if(ax[k]!=null){t+=ax[k]*W[k];w+=W[k]}
     s.score={...ax,total:w?t/w:null};
@@ -320,7 +320,7 @@ function viewStock(t){
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
    <div><div class="muted">${esc(sect(s.sector))} · ${esc(s.t)}</div><h1>${esc(s.name)}</h1>
    <div style="margin-top:4px"><span style="font-size:28px;font-weight:700">${money(s.price,s.currency)}</span> <span class="${day>=0?'pos':'neg'}" style="font-weight:600">${day>=0?'▲':'▼'} ${sg(day)}</span></div></div>
-   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="star ${w?'on':''}" id="star">${w?'★ Suivi':'☆ Suivre'}</button>${com?'':`<a class="star" href="#portfolio" id="addpf" style="display:inline-flex;align-items:center">+ Portefeuille</a>`}</div></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="star ${w?'on':''}" id="star">${w?'★ Suivi':'☆ Suivre'}</button>${com&&s.kind!=='etf'?'':`<a class="star" href="#portfolio" id="addpf" style="display:inline-flex;align-items:center">+ Portefeuille</a>`}</div></div>
   <div class="two" style="margin-top:12px"><div>
    <div class="card"><h2>Cours et canal de régression</h2>
     <div class="pills" id="per">${[[1,'1 an'],[3,'3 ans'],[5,'5 ans'],[10,'10 ans']].map(([y,l])=>`<button data-y="${y}" class="${PERIOD===y?'on':''}">${l}</button>`).join('')}</div>
@@ -331,7 +331,7 @@ function viewStock(t){
     <div id="zbox" style="margin-top:12px"></div></div>
    ${com?'':`<div class="card"><h2>Chiffre d'affaires et résultat net</h2><p class="muted" style="margin:0 0 6px">En milliards, derniers exercices · <span style="color:var(--pri)">■</span> chiffre d'affaires <span style="color:var(--neg)">■</span> résultat net</p><div><canvas id="bars"></canvas></div></div>`}
   </div><div>
-   ${com?`<div class="card"><h2>Matière première</h2><p class="muted" style="margin:0">Hors PEA : ni action ni dividende, donc pas de score ni de fondamentaux. Suivi informatif du cours, de la tendance et du risque. Or : cours du jeton Tether Gold (XAUT), adossé à l'or physique. Argent : titre coté à Londres, en pence.</p></div>`:`<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Score global</h2><span class="badge ${cls(sc.total)}">${r0(sc.total)} /100</span></div>
+   ${s.kind==='etf'?`<div class="card"><h2>ETF</h2><div class="kv"><span>Frais annuels</span><b>${s.er==null?'–':nf(s.er*100,2)+' %'}</b></div><div class="kv"><span>Taille du fonds</span><b>${s.aum==null?'–':bn(s.aum)+' '+(s.currency==='EUR'?'€':s.currency)}</b></div><div class="kv"><span>Rendement distribué</span><b>${pc(s.ey)}</b></div><p class="muted" style="margin:10px 0 0">Un fonds n'a ni score ni fondamentaux. Frais et taille : données Yahoo, souvent absentes pour les ETF européens. Le rendement total du graphique inclut les dividendes.</p></div>`:com?`<div class="card"><h2>Matière première</h2><p class="muted" style="margin:0">Hors PEA : ni action ni dividende, donc pas de score ni de fondamentaux. Suivi informatif du cours, de la tendance et du risque. Or : cours du jeton Tether Gold (XAUT), adossé à l'or physique. Argent : titre coté à Londres, en pence.</p></div>`:`<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Score global</h2><span class="badge ${cls(sc.total)}">${r0(sc.total)} /100</span></div>
     ${axes.map(([l,v])=>`<div class="lab"><span>${l}</span><b>${r0(v)}</b></div><div class="bar"><i style="width:${v==null?0:v}%;background:${v==null?'transparent':v>=70?'var(--pos)':v>=50?'var(--warn)':'var(--neg)'}"></i></div>`).join('')}
     <p class="muted" style="margin:0">Classement par rapport aux valeurs du même secteur (voir « Méthode »).</p></div>
    <div class="card"><h2>Fondamentaux</h2><div class="grid2">
@@ -340,7 +340,12 @@ function viewStock(t){
     <div class="k"><div class="l">ROE</div><div class="v">${pc(s.roe)}</div></div>
     <div class="k"><div class="l">Marge nette</div><div class="v">${pc(s.margin)}</div></div>
     <div class="k"><div class="l">Dette / fonds propres</div><div class="v">${s.de==null?'–':nf(s.de,0)+' %'}</div></div>
-    <div class="k"><div class="l">Rendement FCF</div><div class="v">${pc(s.fcfy)}</div></div></div>
+    <div class="k"><div class="l">Rendement FCF</div><div class="v">${pc(s.fcfy)}</div></div>
+    <div class="k"><div class="l">Marge opérationnelle</div><div class="v">${pc(s.opm)}</div></div>
+    <div class="k"><div class="l">VE / EBITDA</div><div class="v">${nf(s.evebitda,1)}</div></div>
+    <div class="k"><div class="l">Dette nette / EBITDA</div><div class="v">${s.ndebitda==null?'–':nf(s.ndebitda,1)}</div></div>
+    <div class="k"><div class="l">Croissance du BPA</div><div class="v">${s.epsg==null?'–':sg(s.epsg)+' /an'}</div></div></div>
+    ${s.nextearn?`<p class="muted" style="margin:10px 0 0">Prochains résultats : ${new Date(s.nextearn).toLocaleDateString('fr-FR')}</p>`:''}
     <p class="muted" style="margin:10px 0 0">Capitalisation : ${bn(s.mcap)} ${s.currency==='EUR'?'€':s.currency}</p></div>
    <div class="card"><h2>Dividende</h2>
     <div class="kv"><span>Rendement</span><b>${pc(s.dy)}</b></div><div class="kv"><span>Taux de distribution</span><b>${pc(s.payout,0)}</b></div>
@@ -544,10 +549,10 @@ function viewPortfolio(){
 function viewMethod(){
   $('#app').innerHTML=`<h1>Méthode</h1>
   <div class="card"><h2>Score global (0 à 100)</h2><p>Chaque indicateur est classé par rapport aux valeurs du même secteur (percentile). Le score est la moyenne pondérée de 4 axes :</p>
-  <div class="kv"><span>Qualité (30 %)</span><b>ROE, marge nette, faible endettement</b></div>
-  <div class="kv"><span>Valorisation (25 %)</span><b>PER bas, Price/Book bas, rendement FCF élevé</b></div>
+  <div class="kv"><span>Qualité (30 %)</span><b>ROE, marges nette et opérationnelle, faible endettement (dette/fonds propres et dette nette/EBITDA)</b></div>
+  <div class="kv"><span>Valorisation (25 %)</span><b>PER bas, Price/Book bas, VE/EBITDA bas, rendement FCF élevé</b></div>
   <div class="kv"><span>Dividende (25 %)</span><b>rendement, distribution soutenable, croissance, années de hausse</b></div>
-  <div class="kv"><span>Croissance (20 %)</span><b>chiffre d'affaires et résultat net</b></div>
+  <div class="kv"><span>Croissance (20 %)</span><b>chiffre d'affaires, résultat net et bénéfice par action</b></div>
   <p class="muted">Une valeur sans dividende n'a pas d'axe Dividende : les autres axes sont repondérés. Un secteur de moins de 6 valeurs est comparé à l'ensemble.</p></div>
   <div class="card"><h2>Canal de régression et σ</h2><p>On ajuste une droite sur le logarithme du cours (tendance exponentielle). σ est l'écart-type des écarts entre le cours et cette droite. L'écart actuel exprimé en σ indique si la valeur est au-dessus (+) ou en dessous (−) de sa tendance. C'est une description du passé : une valeur peut rester longtemps hors de son canal, ou sa tendance peut changer.</p></div>
   <div class="card"><h2>Rendement total</h2><p>Par défaut, les cours sont ajustés des dividendes (rendement total, dividendes réinvestis) : la tendance, la volatilité, le Sharpe et les comparaisons en tiennent compte. Le bouton « Cours seul » de la fiche revient au cours brut. Si une valeur n'a pas de série ajustée, le cours brut est utilisé.</p></div>

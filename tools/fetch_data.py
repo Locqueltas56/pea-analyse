@@ -81,6 +81,27 @@ def statements(t):
         return [], [], []
 
 
+def eps_growth(t):
+    """Croissance annuelle moyenne du bénéfice par action (BPA dilué) sur les exercices disponibles."""
+    try:
+        e = t.financials.loc["Diluted EPS"].dropna().sort_index()
+        if len(e) >= 3 and e.iloc[0] > 0 and e.iloc[-1] > 0:
+            return num((e.iloc[-1] / e.iloc[0]) ** (1 / (len(e) - 1)) - 1, 4)
+    except Exception:
+        pass
+    return None
+
+
+def next_earnings(t):
+    try:
+        cal = t.calendar or {}
+        d = cal.get("Earnings Date")
+        d = d[0] if isinstance(d, (list, tuple)) and d else d
+        return d.isoformat()[:10] if d is not None else None
+    except Exception:
+        return None
+
+
 def fetch_one(row):
     tk = row["ticker"]
     hist = weekly_closes(tk)
@@ -94,7 +115,24 @@ def fetch_one(row):
     fcf = num(info.get("freeCashflow"))
     dy, dgrowth, dyears = dividend_stats(t, price)
     years, rev, ni = statements(t)
-    return {
+    kind = row.get("kind") or "stock"
+    ebitda = num(info.get("ebitda"))
+    debt, cash = num(info.get("totalDebt")), num(info.get("totalCash"))
+    extra = {}
+    if kind == "stock":
+        extra = {
+            "opm": num(info.get("operatingMargins"), 4),
+            "evebitda": num(info.get("enterpriseToEbitda"), 2),
+            "ndebitda": num((debt - cash) / ebitda, 2) if debt is not None and cash is not None and ebitda and ebitda > 0 else None,
+            "epsg": eps_growth(t),
+            "nextearn": next_earnings(t),
+        }
+    elif kind == "etf":
+        er = info.get("netExpenseRatio") or info.get("annualReportExpenseRatio")
+        if er is not None and er > 0.2:  # parfois exprimé en % (0.07) ou en fraction (0.0007)
+            er = er / 100
+        extra = {"er": num(er, 5) if er else None, "aum": num(info.get("totalAssets")), "ey": num(info.get("yield") or info.get("trailingAnnualDividendYield"), 4)}
+    return {**extra,
         "t": tk, "name": row.get("name") or info.get("shortName") or tk,
         "sector": info.get("sector") or row.get("sector") or "Autre",
         "country": row.get("country") or "", "currency": info.get("currency") or "EUR",
