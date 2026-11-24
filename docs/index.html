@@ -490,7 +490,7 @@ function viewPortfolio(){
   }
   const eur=v=>nf(v,0)+' €', pre=PFADD?BYT[PFADD]:null; PFADD=null;
   $('#app').innerHTML=`<h1>Portefeuille</h1>
-  <p class="muted">Tes lignes sont enregistrées sur cet appareil uniquement. Pour les retrouver sur un autre appareil, utilise l'export en bas de page.</p>
+  <p class="muted">Tes lignes, valeurs suivies et alertes sont enregistrées sur cet appareil uniquement. Pour les retrouver sur un autre appareil, ou après avoir vidé le navigateur, utilise la sauvegarde en bas de page.</p>
   <div class="card"><h2>Valeur du portefeuille</h2>
    <div style="font-size:30px;font-weight:700">${inc.length?eur(V):'–'}</div>
    <div class="${PL>=0?'pos':'neg'}" style="font-weight:600">${inc.length?(PL>=0?'▲ +':'▼ −')+eur(Math.abs(PL))+' ('+sg(C?PL/C:null)+')':''}</div>
@@ -529,12 +529,16 @@ function viewPortfolio(){
     const a=pfGet().filter(p=>p.t!==s.t);a.push({t:s.t,q,pru:pr});pfSet(a);viewPortfolio();
   };
   $('#pf-list').onclick=e=>{const t=e.target.dataset?.del;if(t){pfSet(pfGet().filter(p=>p.t!==t));viewPortfolio()}};
-  $('#pf-exp').onclick=()=>{const j=JSON.stringify(pfGet());$('#pf-json').value=j;$('#pf-msg').style.color='var(--ink2)';let ok=false;try{navigator.clipboard.writeText(j).then(()=>{$('#pf-msg').textContent='Sauvegarde copiée.'},()=>{})}catch(e){}$('#pf-msg').textContent='Sauvegarde affichée : copie le texte.'};
+  $('#pf-exp').onclick=()=>{const j=JSON.stringify({v:2,pf:pfGet(),watch:watch(),alerts:alGet()});$('#pf-json').value=j;const m=$('#pf-msg');m.style.color='var(--ink2)';m.textContent='Sauvegarde affichée : copie le texte (portefeuille, valeurs suivies et alertes).';try{navigator.clipboard.writeText(j).then(()=>{m.textContent='Sauvegarde copiée (portefeuille, valeurs suivies et alertes).'},()=>{})}catch(e){}};
   $('#pf-imp').onclick=()=>{
     const m=$('#pf-msg');m.style.color='var(--neg)';
-    try{const a=JSON.parse($('#pf-json').value);
-      if(!Array.isArray(a)||!a.every(p=>p&&BYT[p.t]&&p.q>0&&p.pru>=0))throw 0;
-      pfSet(a.map(p=>({t:p.t,q:+p.q,pru:+p.pru})));viewPortfolio();
+    try{let o=JSON.parse($('#pf-json').value);if(Array.isArray(o))o={pf:o};
+      const pf=o.pf||[],wl=o.watch||[];
+      if(!Array.isArray(pf)||!pf.every(p=>p&&BYT[p.t]&&p.q>0&&p.pru>=0)||!Array.isArray(wl)||!wl.every(t=>typeof t==='string'&&BYT[t]))throw 0;
+      pfSet(pf.map(p=>({t:p.t,q:+p.q,pru:+p.pru})));
+      if(o.watch)setWatch(wl);
+      if(o.alerts&&typeof o.alerts==='object')alSet(o.alerts);
+      viewPortfolio();
     }catch(e){m.textContent='Sauvegarde illisible, ou contenant une valeur inconnue.'}
   };
   if(risk){
