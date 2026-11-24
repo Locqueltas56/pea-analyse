@@ -86,6 +86,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 <body>
 <div id="banner"></div>
 <div class="top"><div class="brand">Analyse PEA</div><nav class="tabs" id="nav-d"></nav></div>
+<div id="alerts"></div>
 <div class="wrap" id="app"><p class="muted">Chargement…</p></div>
 <nav class="tabs" id="nav-m" style="display:flex"></nav>
 <script>
@@ -180,7 +181,7 @@ function nav(){
   $('#nav-m').style.display=innerWidth>=800?'none':'flex';
 }
 const watch=()=>{try{return JSON.parse(localStorage.getItem('pea.watch')||'[]')}catch(e){return[]}};
-const setWatch=a=>{try{localStorage.setItem('pea.watch',JSON.stringify(a))}catch(e){}};
+const setWatch=a=>{try{localStorage.setItem('pea.watch',JSON.stringify(a))}catch(e){}renderAlerts()};
 
 /* ---------- saisie avec suggestions ---------- */
 const norm=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -260,6 +261,7 @@ function viewScreener(){
   const bind=(id,k,num)=>$(id).addEventListener('input',e=>{STATE[k]=num?(e.target.value===''?(k==='minScore'?0:''):e.target.value):e.target.value;upd()});
   bind('#f-q','q');bind('#f-sector','sector');bind('#f-country','country');bind('#f-sort','sort');
   bind('#f-minScore','minScore',1);bind('#f-maxPer','maxPer',1);bind('#f-minDy','minDy',1);bind('#f-minRoe','minRoe',1);
+  autocomplete($('#f-q'),x=>{STATE.q='';location.hash='#s-'+slug(x.t)},{clear:true,all:true});
   upd();
 }
 
@@ -347,8 +349,16 @@ function viewStock(t){
     <div class="kv"><span>Croissance sur 5 ans</span><b>${s.dgrowth==null?'–':sg(s.dgrowth)+' /an'}</b></div><div class="kv"><span>Années de hausse consécutives</span><b>${s.dyears||0}</b></div></div>
    `}
    <div class="card"><h2>Risque <span class="muted">(<span id="rk"></span>)</span></h2><div id="risk"></div></div>
+   <div class="card"><h2>Alerte de cours</h2><p class="muted" style="margin:0 0 8px">Signalée à l'ouverture de l'app si la valeur est suivie ou dans ton portefeuille. Laisse vide pour ne pas en avoir.</p>
+    <div class="filters"><label>Si le cours monte à (≥)<input id="ap-a" type="number" inputmode="decimal" step="0.01" min="0" placeholder="–"></label><label>Si le cours descend à (≤)<input id="ap-b" type="number" inputmode="decimal" step="0.01" min="0" placeholder="–"></label></div>
+    <div style="margin-top:10px"><button class="btn" id="ap-s">Enregistrer</button></div><div class="err" id="ap-m"></div></div>
   </div></div>`;
   if($('#addpf')) $('#addpf').onclick=()=>{PFADD=s.t};
+  {const cur=alCfg().prices[s.t]||{};if(cur.above!=null)$('#ap-a').value=cur.above;if(cur.below!=null)$('#ap-b').value=cur.below;
+   $('#ap-s').onclick=()=>{const a=parseFloat($('#ap-a').value),b=parseFloat($('#ap-b').value),o=alGet();o.prices=o.prices||{};
+    const e={};if(a>=0)e.above=a;if(b>=0)e.below=b;
+    if(e.above==null&&e.below==null)delete o.prices[s.t];else o.prices[s.t]=e;
+    alSet(o);const m=$('#ap-m');m.style.color='var(--ink2)';m.textContent=(e.above==null&&e.below==null)?'Alerte retirée.':'Alerte enregistrée.'+(watch().includes(s.t)||pfGet().some(p=>p.t===s.t)?'':' Pour qu\'elle soit vérifiée, suis la valeur (☆) ou ajoute-la au portefeuille.')}}
   $('#star').onclick=()=>{const a=watch(),i=a.indexOf(s.t);i>=0?a.splice(i,1):a.push(s.t);setWatch(a);viewStock(t)};
   const paint=()=>{
     const st=stats(s,PERIOD);
@@ -397,18 +407,62 @@ function viewCompare(){
   paint();
 }
 
+
+/* ---------- alertes (vérifiées à l'ouverture) ---------- */
+const alGet=()=>{try{const o=JSON.parse(localStorage.getItem('pea.alerts')||'{}');return o&&typeof o==='object'?o:{}}catch(e){return{}}};
+const alSet=o=>{try{localStorage.setItem('pea.alerts',JSON.stringify(o))}catch(e){}renderAlerts()};
+const alCfg=()=>{const o=alGet();return{sig:o.sig??2,move:o.move??5,prices:o.prices||{}}};
+let ALDISMISS=false;
+const alScope=()=>[...new Set([...watch(),...pfGet().map(p=>p.t)])].filter(t=>BYT[t]);
+function computeAlerts(){
+  const c=alCfg(),out=[];
+  for(const t of alScope()){
+    const s=BYT[t],st=stats(s,5),day=s.prev?s.price/s.prev-1:null,pr=c.prices[t]||{};
+    if(st&&c.sig>0&&Math.abs(st.z)>=c.sig) out.push({t,text:`${sgs(st.z)} : ${st.z<0?'nettement sous':'nettement au-dessus de'} sa tendance`});
+    if(day!=null&&c.move>0&&Math.abs(day)*100>=c.move) out.push({t,text:`${sg(day)} au dernier cours`});
+    if(pr.above!=null&&s.price>=pr.above) out.push({t,text:`cours ${money(s.price,s.currency)}, au-dessus de ${nf(pr.above,2)}`});
+    if(pr.below!=null&&s.price<=pr.below) out.push({t,text:`cours ${money(s.price,s.currency)}, sous ${nf(pr.below,2)}`});
+  }
+  return out;
+}
+function renderAlerts(){
+  const el=$('#alerts'); if(!el||!DATA) return;
+  const L=(ALDISMISS||(location.hash||'').startsWith('#s-'))?[]:computeAlerts();
+  el.innerHTML=L.length?`<div class="wrap" style="padding-bottom:0"><div class="card" style="border-color:var(--warn);margin-bottom:0">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">Alertes (${L.length})</h2><button class="star" id="al-x" style="height:36px">Masquer</button></div>
+   ${L.map(a=>`<a href="#s-${slug(a.t)}" style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px"><b>${esc(BYT[a.t].name)}</b><span style="color:var(--ink2);text-align:right">${esc(a.text)}</span></a>`).join('')}</div></div>`:'';
+  const b=$('#al-x'); if(b) b.onclick=()=>{ALDISMISS=true;renderAlerts()};
+}
+function alertSettings(){
+  const c=alCfg(),pr=Object.entries(c.prices).filter(([t,v])=>BYT[t]&&(v.above!=null||v.below!=null));
+  return `<div class="card"><h2>Alertes</h2>
+   <p class="muted" style="margin:0 0 10px">Vérifiées à chaque ouverture de l'app, pour tes valeurs suivies et ton portefeuille, d'après les dernières données (mises à jour chaque soir de semaine). Aucune notification n'est envoyée si l'app est fermée. Mets 0 pour désactiver une règle.</p>
+   <div class="filters"><label>Écart à la tendance (σ)<input id="al-sig" type="number" inputmode="decimal" step="0.5" min="0" value="${c.sig}"></label>
+   <label>Variation du jour (%)<input id="al-move" type="number" inputmode="decimal" step="1" min="0" value="${c.move}"></label></div>
+   <h2 style="margin-top:16px">Alertes de cours</h2>
+   ${pr.map(([t,v])=>`<div class="kv"><span><b style="color:var(--ink)">${esc(BYT[t].name)}</b> · ${v.above!=null?'≥ '+nf(v.above,2):''}${v.above!=null&&v.below!=null?' · ':''}${v.below!=null?'≤ '+nf(v.below,2):''}</span><button class="x" data-alx="${esc(t)}" style="background:none;border:0;color:var(--ink2);min-height:44px;cursor:pointer">Retirer</button></div>`).join('')||'<p class="muted" style="margin:0">Aucune. Crée-les depuis la fiche d\'une valeur.</p>'}</div>`;
+}
+function bindAlertSettings(){
+  const sv=()=>{const o=alGet();const f=x=>{const v=parseFloat(x);return v>=0?v:null};
+    const a=f($('#al-sig').value),m=f($('#al-move').value);if(a!=null)o.sig=a;if(m!=null)o.move=m;alSet(o)};
+  $('#al-sig').addEventListener('change',sv);$('#al-move').addEventListener('change',sv);
+  document.querySelectorAll('[data-alx]').forEach(b=>b.onclick=()=>{const o=alGet();if(o.prices)delete o.prices[b.dataset.alx];alSet(o);viewWatch()});
+}
+
 /* ---------- vue : suivi ---------- */
 function viewWatch(){
   const L=watch().map(t=>BYT[t]).filter(Boolean);
   $('#app').innerHTML=`<h1>Suivi</h1><p class="muted">Valeurs suivies (enregistrées sur cet appareil uniquement).</p>
   <div class="head"><div></div><div>Valeur</div><div>PER</div><div>Div.</div><div>ROE</div><div>1 an</div><div>Écart σ (5 ans)</div><div>Cours</div></div>
-  <div class="list">${L.map(rowHtml).join('')||'<div class="card muted">Aucune valeur suivie. Ouvre une fiche et touche « Suivre ».</div>'}</div>`;
+  <div class="list">${L.map(rowHtml).join('')||'<div class="card muted">Aucune valeur suivie. Ouvre une fiche et touche « Suivre ».</div>'}</div>
+  <div style="margin-top:14px">${alertSettings()}</div>`;
+  bindAlertSettings();
 }
 
 
 /* ---------- vue : portefeuille ---------- */
 const pfGet=()=>{try{const a=JSON.parse(localStorage.getItem('pea.pf')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
-const pfSet=a=>{try{localStorage.setItem('pea.pf',JSON.stringify(a))}catch(e){}};
+const pfSet=a=>{try{localStorage.setItem('pea.pf',JSON.stringify(a))}catch(e){}renderAlerts()};
 let PFADD=null;
 const alloc=(m,tot,f)=>Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="lab"><span>${esc(f(k))}</span><b>${nf(v/tot*100,1)} %</b></div><div class="bar"><i style="width:${v/tot*100}%;background:var(--pri)"></i></div>`).join('');
 function viewPortfolio(){
@@ -514,6 +568,7 @@ function route(keep){
   else if(h==='#watch') viewWatch();
   else if(h==='#method') viewMethod();
   else viewScreener();
+  renderAlerts();
   if(!keep) window.scrollTo(0,0);
 }
 addEventListener('hashchange',()=>route());
